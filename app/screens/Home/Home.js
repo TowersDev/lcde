@@ -145,6 +145,8 @@ export default function Home (props) {
 
   // prueba
 
+  // prueba 2
+
   const interpolations = locations.map((marker, index) => {
     const inputRange = [
       (index -1 ) * CARD_WIDTH,
