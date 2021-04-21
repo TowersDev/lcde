@@ -143,6 +143,7 @@ export default function Home (props) {
   //   });
   // }, []);
 
+
   const interpolations = locations.map((marker, index) => {
     const inputRange = [
       (index -1 ) * CARD_WIDTH,
