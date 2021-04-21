@@ -143,6 +143,11 @@ export default function Home (props) {
   //   });
   // }, []);
 
+  // prueba
+
+  // prueba 2
+
+  // prueba 3
 
   const interpolations = locations.map((marker, index) => {
     const inputRange = [
