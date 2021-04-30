@@ -20,6 +20,7 @@ export default function ListReviews(props) {
   });
 
   useEffect(() => {
+    console.log('entra')
     db.collection("reviews")
       .where("idRestaurant", "==", idRestaurant)
       .get()

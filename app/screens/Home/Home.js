@@ -1,278 +1,75 @@
-import React, { useState, useEffect, useCallback, Component, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, Component } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import MapView, { PROVIDER_GOOGLE} from 'react-native-maps';
-import { View, Text, Image, Dimensions, Animated, TouchableOpacity, TouchableHighlight, TextInput, ScrollView, Button } from "react-native";
+import MapView, { Callout, PROVIDER_GOOGLE} from 'react-native-maps';
+import { View, Text, Image, Dimensions, Animated, TouchableOpacity, TextInput, FlatList, ScrollView } from "react-native";
 import * as Location from 'expo-location';
 import firebase from "firebase/app";
-import { Icon, Rating, Card } from 'react-native-elements';
+import { Icon, Rating, Button, Card, Divider } from 'react-native-elements';
 import { firebaseApp } from "../../utils/firebase";
 import { mapRetroStyle } from '../../utils/const';
 import styles from "./styles";
 import * as Permissions from 'expo-permissions';
-import { Platform } from "react-native";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import BottomSheet from 'reanimated-bottom-sheet';
 
 export default function Home (props) {
-  const { navigation } = props;
-  const { width, height } = Dimensions.get('screen');
-  const [locations, setLocations] = useState([]);
-  const _map = React.useRef(null);
-  const CARD_WIDTH = width * 0.8;
-  let mapIndex = 0;
-  let mapAnimation = new Animated.Value(0);
-  const _scrollView = React.useRef(null);
-  const SPACING_FOR_CARD_INSET = width * 0.1 - 10;
-  const [currentPosition, setCurrentPosition] = useState({
-    latitude: null,
-    longitude: null,
-    latitudeDelta: 0.001,
-    longitudeDelta: 0.001,
-  })
-  const toastRef = useRef();
+
+  const [region, setRegion] = useState(null);
+  const [bars, setBars] = useState(null);
+  const [barIsClicked, setBarIsClicked] = useState(false);
+  const sheetRef = useRef(null);
+  const [locationChange, setLocationChange] = useState(null);
+  const [showButtonBuscar, setShowButtonBuscar] = useState(true);
+  const [searchRegion, setSearchRegion] = useState(null);
+  const _map = useRef(null);
 
   useEffect(() => {
     (async () => {
-      Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High})
-      Location.requestPermissionsAsync();
-      const loc = await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High});
-      setCurrentPosition({
-        latitude: loc.coords.latitude || 0,
-        longitude: loc.coords.longitude || 0,
-        latitudeDelta: 0.001,
-        longitudeDelta: 0.001,
-      });
-
-      const url  = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
-      const locationa = `location=${loc.coords.latitude},${loc.coords.longitude}`;
-      const radius = '&radius=200';
-      const type = '&keyword=restaurant';
-      const key = '&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo';
-      const restaurantSearchUrl = url + locationa + radius + type + key;
-      fetch(restaurantSearchUrl)
-        .then((response) => response.json())
-        .then((responseJson) => {
-          const address = responseJson.results;
-          setLocations(address);
-        }
+      console.log('entra')
+      const resultPermissions = await Permissions.askAsync(
+        Permissions.LOCATION
       );
+      const statusPermissions = resultPermissions.permissions.location.status;
 
-      if (locations.length > 0) {
-        mapAnimation.addListener(({ value }) => {
-          let index = Math.floor(value / CARD_WIDTH + 0.3);
-          if (index >= locations.length) {
-            index = locations.length -1;
-          }
-          if (index <= 0) {
-            index = 0;
-          }
-
-          clearTimeout(regionTimeout);
-
-          const regionTimeout = setTimeout(() => {
-            console.log(mapIndex);
-            console.log(index)
-            if (mapIndex !== index) {
-              mapIndex = index;
-              const { location } = locations[index].geometry;
-              _map.current.animateToRegion(
-                {
-                  ...location,
-                  latitude: location.lat,
-                  longitude: location.lng,
-                  latitudeDelta: 0.001,
-                  longitudeDelta: 0.001,
-                },
-                0
-              );
-            }
-          }, 10);
+      if (statusPermissions !== "granted") {
+        toastRef.current.show(
+          "Tienes que aceptar los permisos de localizacion para crear un bar",
+          3000
+        );
+      } else {
+        const loc = await Location.getCurrentPositionAsync({});
+        setRegion({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+          latitudeDelta: 0.001,
+          longitudeDelta: 0.001,
         });
+        const url  = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
+        const locationa = `location=${loc.coords.latitude},${loc.coords.longitude}`;
+        const radius = '&radius=10000';
+        const type = '&keyword=bar';
+        const key = '&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo';
+        const restaurantSearchUrl = url + locationa + radius + type + key;
+        fetch(restaurantSearchUrl)
+          .then((response) => response.json())
+          .then((responseJson) => {
+            const address = responseJson.results;
+            setBars(address);
+          }
+        );
       }
     })();
-  }, [setLocations, setCurrentPosition]);
+  }, [setBarIsClicked]);
 
-  useEffect(() => {
-
-
-  }, []);
-
-  // useEffect(() => {
-  //   navigator.geolocation.getCurrentPosition((position) => {
-  //     // console.log(position)
-  //     const { latitude, longitude} = position.coords;
-  //     setCurrentPosition({
-  //       ...currentPosition,
-  //       latitude: latitude,
-  //       longitude:longitude,
-  //       latitudeDelta: 0.001,
-  //       longitudeDelta: 0.001,
-  //     })
-  //   },
-  //   (error) =>  console.log(error.message, 3000),
-  //     { timeout: 20000, maximumAge: 1000 }
-  //   )
-
-  //   mapAnimation.addListener(({ value }) => {
-  //     let index = Math.floor(value / CARD_WIDTH + 0.3);
-  //     console.log(insex);
-  //     if (index >= locations.length) {
-  //       index = locations.length -1;
-  //     }
-  //     if (index <= 0) {
-  //       index = 0;
-  //     }
-
-  //     clearTimeout(regionTimeout);
-
-  //     const regionTimeout = setTimeout(() => {
-  //       if (mapIndex !== index) {
-  //         mapIndex = index;
-  //         const { location } = locations[index].geometry;
-  //         _map.current.animateToRegion(
-  //           {
-  //             ...location,
-  //             latitude: location.lat,
-  //             longitude: location.lng,
-  //             latitudeDelta: 0.001,
-  //             longitudeDelta: 0.001,
-  //           },
-  //           0
-  //         );
-  //       }
-  //     }, 10);
-  //   });
-  // }, []);
-
-  // prueba
-
-  // prueba 2
-
-  // prueba 3
-
-  const interpolations = locations.map((marker, index) => {
-    const inputRange = [
-      (index -1 ) * CARD_WIDTH,
-      index * CARD_WIDTH,
-      ((index + 1 ) * CARD_WIDTH),
-    ];
-
-    const scale = mapAnimation.interpolate({
-      inputRange,
-      outputRange: [1, 1.5, 1],
-      extrapolate: "clamp"
-    });
-    return { scale };
-  });
-
-  const onMarkerPress = (mapEventData) => {
-    const markerId = mapEventData._targetInst.return.key;
-    let x = (markerId * CARD_WIDTH) + (markerId * 20)
-    if (Platform.OS === 'ios') {
-      x = x - SPACING_FOR_CARD_INSET;
-    }
-
-    _scrollView.current.scrollTo({ x: x, y: 0, animated: true});
-  }
-
-  const searchBarsInLocation = () => {
-    const url  = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
-    const locationa = `location=${currentPosition.latitude},${currentPosition.longitude}`;
-    const radius = '&radius=200';
-    const type = '&keyword=bar';
-    const key = '&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo';
-    const restaurantSearchUrl = url + locationa + radius + type + key;
-    fetch(restaurantSearchUrl)
-      .then((response) => response.json())
-      .then((responseJson) => {
-        const address = responseJson.results;
-        setLocations(address);
-      }
-    );
-  }
-
-  const prueba = [{
-    name: 'geoLocation',
-    icon: <Icon type="material-community" name="magnify" />,
-    function: () => searchBarsInLocation(),
-  },
-  {
-    name: 'buscarBares',
-    icon: <Icon type="material-community" name="magnify" />,
-    function: () => searchBarsInLocation(),
-  },
-  {
-    name: 'ghjghj',
-    icon: <Icon type="material-community" name="magnify" />,
-    function: () => searchBarsInLocation(),
-  },
-  {
-    name: 'jkljklj',
-    icon: <Icon type="material-community" name="magnify" />,
-    function: () => searchBarsInLocation(),
-  },
-  {
-    name: 'wqqweqwe',
-    icon: <Icon type="material-community" name="magnify" />,
-    function: () => searchBarsInLocation(),
-  },
-  ];
-
-  const onRegionChange = (e) => {
-    setCurrentPosition(e);
-  };
-
-  const prueba2 = (id, name) => {
-    navigation.navigate("barHome", {
-      id,
-      name,
-    });
-  };
-
-  return(
-    <View style={styles.container}>
-      {currentPosition.latitude && (
-        <MapView
-        ref={_map}
-        provider={PROVIDER_GOOGLE}
-        style={styles.container}
-        customMapStyle={mapRetroStyle}
-        initialRegion={currentPosition}
-        // region={region}
-        // showsUserLocation={true}
-        showsMyLocationButton={true}
-        zoomEnabled={true}
-        minZoomLevel={2}  // default => 0
-        maxZoomLevel={20} // default => 20
-        onRegionChangeComplete={(e) => onRegionChange(e)}
-        showsUserLocation={true}
+  const renderHeader = () => (
+    <>
+      <View
+        style={styles.header}
       >
-        {locations.map((market, index) => {
-          const scaleStyle = {
-            transform: [
-              {
-                scale: interpolations[index].scale,
-              },
-            ],
-          };
-          return (
-            <MapView.Marker key={index} coordinate={{latitude: market.geometry.location.lat, longitude: market.geometry.location.lng}}>
-              <Animated.View style={[styles.markerWrap]}>
-                <Animated.Image
-                  source={require('../../../assets/img/market.png')}
-                  style={[styles.marker, scaleStyle]}
-                  resizeMode="cover"
-                />
-              </Animated.View>
-            </MapView.Marker>
-          )
-        })}
-      </MapView>
-      )}
-      <ScrollView
+          <ScrollView
           horizontal
           scrollEventThrottle={1}
-          showsHorizontalScrollIndicator={false}
-          height={50}
+          height={60}
           style={styles.chipsScrollView}
           contentInset={{ // ios only
             top: 0,
@@ -281,110 +78,238 @@ export default function Home (props) {
             right: 20,
           }}
           contentContainerStyle={{
-            paddingRight: Platform.OS === 'android' ? 20 : 0
+            paddingRight: Platform.OS === 'android' ? 20 : 20
           }}
         >
+                  <Button
+          title="Buscar"
+          containerStyle={{ alignItems: 'center' }}
+          buttonStyle={styles.btnRegister}
+          onPress={buscar}
+        />
           {prueba.map((category, index) => (
-            <TouchableOpacity key={index} style={styles.chipsItem} onPress={category.function}>
+            <TouchableOpacity key={index} style={styles.chipsItem}>
               {category.icon}
-              <Text>{category.name}</Text>
+              <Text style={{ fontSize: 12, fontWeight: 'bold' }}>{category.name}</Text>
             </TouchableOpacity>
           ))}
-      </ScrollView>
-      <Animated.ScrollView
-        ref={_scrollView}
-        horizontal
-        scrollEventThrottle={1}
-        showsHorizontalScrollIndicator={false}
-        style={styles.scrollView}
-        pagingEnabled
-        snapToInterval={CARD_WIDTH + 20}
-        snapToAlignment="center"
-        style={styles.scrollView}
-        contentInset={{
-          top: 0,
-          left: SPACING_FOR_CARD_INSET,
-          bottom: 0,
-          right: SPACING_FOR_CARD_INSET
+        </ScrollView>
+      </View>
+    </>
+  );
+
+  const renderContent = () => (
+      <View
+        style={{
+          backgroundColor: 'white',
+          padding: 10,
+          borderWidth: 2,
+          borderLeftColor: 'rgba(166, 47, 3, .4)',
+          borderTopColor: 'white',
+          borderRightColor: 'rgba(166, 47, 3, .4)',
+          borderBottomColor: 'white',
+          borderStyle:'solid',
+          height: '100%',
         }}
-        contentContainerStyle={{
-          paddingHorizontal: Platform.OS === 'android' ? SPACING_FOR_CARD_INSET : 0
-        }}
-        onScroll={Animated.event(
-          [
-            {
-              nativeEvent: {
-                contentOffset: {
-                  x: mapAnimation,
-                }
-              }
-            }
-          ],
-          {useNativeDriver: true}
-        )}
       >
-        {locations.length > 0
-          ? locations.map((market, index) => (
-            <TouchableHighlight activeOpacity={0.6}
-            underlayColor="#DDDDDD" style={styles.card} onPress={() => prueba2(market.id, market.name)}>
-              <View key={index}>
-                <View style={{ display: 'flex', flexDirection: 'row' }}>
-                  <View style={{ display: 'flex', marginLeft: 15 }}>
-                    {market.photos && market.photos.map((photo, index) => (
-                      <Image
-                        key={index}
-                        style={{
-                          marginTop: 20, borderRadius: 15, width: 60, height: 60,
-                        }}
-                        resizeMode="cover"
-                        source={{ uri: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo` }}
-                      />
-                    ))}
-                  </View>
-                  <View style={{ display: 'flex', marginLeft: 15 }}>
-                    <View style={{ display: 'flex', flexDirection: 'row' }}>
-                    <Text style={{ marginRight: 5, marginTop: 15, fontWeight: 'bold' }}>{market.name}</Text>
-                    </View>
-                    <View style={{ display: 'flex', flexDirection: 'row' }}>
-                      <Icon type="material-community" size={13} name="map-marker" iconStyle={styles.iconMarker} underlayColor="transparent" />
-                      <Text style={{ marginRight: 5, marginTop: 3, color: 'green', fontWeight: 'bold', fontSize: 10 }}>{market.vicinity.replace(/"/g,' ')}</Text>
-                    </View>
-                    <View style={{ display: 'flex', flexDirection: 'row'}}>
-                      <Rating imageSize={10} style={{ left: 0, marginTop: 10 }} startingValue={market.rating} readonly />
-                      <Text style={{ marginRight: 5, marginTop: 8, fontWeight: 'bold', color: 'grey', fontSize: 10 }}>{market.user_ratings_total}</Text>
-                    </View>
-                  </View>
-                </View>
+        {bars.map((bar, index)=>(
+          <>
+          <View style={styles.viewRestaurant}>
+            <View style={styles.viewRestaurantImage}>
+              <Image
+                resizeMode="cover"
+                source={require("../../../assets/img/no-image.png")}
+                style={styles.imageRestaurant}
+              />
+            </View>
+            <View style={{ marginTop: 3}}>
+              <Text style={styles.restaurantName}>{bar.name}</Text>
+              <View style={{flexDirection: "row"}}>
+                <Icon type="material-community" size={13} name="map-marker" iconStyle={styles.iconMarker} underlayColor="transparent" />
+                <Text style={styles.restaurantAddress}>asdasd</Text>
               </View>
-            </TouchableHighlight>
-          ))
-        : (
-          <View style={styles.card}>
-            <Image
-              source={require("../../../assets/img/no-image.png")}
-              style={styles.cardImage}
-              resizeMode="cover"
-            />
-            <View style={styles.textContent}>
-              <Text numberOfLines={1} style={styles.cardTitle}>NO FIND BAR</Text>
-              <Text numberOfLines={1} style={styles.cardDescription}>No hay bares registrados</Text>
-              <View style={styles.button}>
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate("add-bar")}
-                    style={[styles.signIn, {
-                      borderColor: "#ff6347",
-                      borderWidth: 1
-                    }]}
-                  >
-                    <Text style={[styles.textSign, {
-                      color: "#FF6347"
-                    }]}>Registrar</Text>
-                  </TouchableOpacity>
-                </View>
+              <Text style={styles.restaurantDescription}>asdasd</Text>
+              <View style={{flexDirection: "row"}}>
+                <Rating ratingColor={"#ff0000"} style={styles.rating} imageSize={10} startingValue={0} readonly />
+                <Text style={{ fontSize: 10, marginTop: 3, fontWeight: "bold" }}>{10}</Text>
+              </View>
             </View>
           </View>
-        )}
-      </Animated.ScrollView>
-    </View>
+          <Divider style={{ backgroundColor: 'grey' }} />
+          </>
+        ))}
+      </View>
   );
-}
+
+  const buscar = () => {
+    setShowButtonBuscar(false);
+    console.log(locationChange);
+    const url  = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
+    const locationa = `location=${locationChange.latitude},${locationChange.longitude}`;
+    const radius = '&radius=10000';
+    const type = '&keyword=bar';
+    const key = '&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo';
+    const restaurantSearchUrl = url + locationa + radius + type + key;
+    fetch(restaurantSearchUrl)
+      .then((response) => response.json())
+      .then((responseJson) => {
+        const address = responseJson.results;
+        setBars(address);
+      }
+    );
+  }
+
+  const onRegionChange = (e) => {
+    setLocationChange(e);
+  }
+
+  const prueba = [{
+    name: 'fghfgh',
+    icon: <Icon type="material-community" name="magnify" />
+  },
+  {
+    name: 'asdasd',
+    icon: <Icon type="material-community" name="magnify" />
+  },
+  {
+    name: 'ghjghj',
+    icon: <Icon type="material-community" name="magnify" />
+  },
+  {
+    name: 'jkljklj',
+    icon: <Icon type="material-community" name="magnify" />
+  },
+  ];
+
+  return(
+    <>
+      <MapView
+        ref={_map}
+        style={{ height: '100%'}}
+        initialRegion={region}
+        customMapStyle={mapRetroStyle}
+        onRegionChangeComplete={onRegionChange}
+        showsUserLocation
+        showsMyLocationButton
+      >
+        {bars && bars.map((bar, index) => (
+          <MapView.Marker
+            key={index}
+            coordinate={{ latitude : bar.geometry.location.lat , longitude : bar.geometry.location.lng }}
+            image={require('../../../assets/img/market.png')}
+            onPress={() => setBarIsClicked(!barIsClicked)}
+          >
+            <Callout tooltip>
+              <View style={{ backgroundColor: '#fff', heigth: 20, width: 100}}>
+                <Text>{bar.name}</Text>
+              </View>
+            </Callout>
+          </MapView.Marker>
+        ))}
+      </MapView>
+    <GooglePlacesAutocomplete
+      placeholder='Buscar zona'
+      minLength={2} // minimum length of text to search
+      autoFocus={true}
+      returnKeyType={'search'} // Can be left out for default return key https://facebook.github.io/react-native/docs/textinput.html#returnkeytype
+      listViewDisplayed={true}   // true/false/undefined
+      fetchDetails={true}
+      renderDescription={row => row.description || row.vicinity} // custom description render
+      onPress={(data, details = null) => { // 'details' is provided when fetchDetails = true
+        setSearchRegion({
+          latitude: details?.geometry?.location?.lat || '',
+          longitude: details?.geometry?.location?.lng || '',
+          latitudeDelta: 0.001,
+          longitudeDelta: 0.001,
+        })
+        _map.current.animateToRegion(
+          {
+            latitude: details?.geometry?.location?.lat || '',
+            longitude: details?.geometry?.location?.lng || '',
+            latitudeDelta: 0.001,
+            longitudeDelta: 0.001,
+          },
+          0
+        );
+      }}
+      query={{
+        // available options: https://developers.google.com/places/web-service/autocomplete
+        key: 'AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo',
+        language: 'es', // language of the results
+        types: 'geocode', // default: 'geocode'
+      }}
+      styles={{
+        description: {
+          fontSize: 12,
+          fontWeight: 'bold',
+        },
+        container: {
+          marginTop: 100,
+          zIndex: 9999,
+          position: 'absolute',
+          width: '90%',
+          borderRadius: 5,
+          marginLeft: 20,
+          shadowColor: "#ccc",
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.5,
+          shadowRadius: 5,
+      },
+      textInputContainer: {
+          backgroundColor: 'rgba(0,0,0,0)',
+          borderTopWidth: 0,
+          borderBottomWidth: 0,
+          height: 200,
+      },
+      textInput: {
+          marginLeft: 5,
+          marginRight: 5,
+          color: '#A62F03',
+          fontWeight: 'bold',
+          fontSize: 12,
+          height: 40,
+          borderRadius: 30,
+          borderWidth: 2,
+          borderColor: 'rgba(166, 47, 3, .4)',
+          borderStyle:'solid',
+      },
+      listView: {
+          flex: 1,
+          position: 'absolute',
+          top: 50,
+          backgroundColor: 'white',
+          width: '50%',
+          alignContent: 'center',
+          alignSelf: 'center',
+          width: '100%',
+          color: 'black',
+      },
+      row: {
+          height: 40
+      },
+      poweredContainer: {
+          display: 'none'
+      },
+      powered: {
+          display: 'none'
+      }
+      }}
+      nearbyPlacesAPI={'GoogleReverseGeocoding'} // Which API to use: GoogleReverseGeocoding or GooglePlacesSearch
+      GoogleReverseGeocodingQuery={{
+        // available options for GoogleReverseGeocoding API : https://developers.google.com/maps/documentation/geocoding/intro
+        key: 'AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo',
+        language: 'es',
+      }}
+    />
+      {bars && (
+        <BottomSheet
+          ref={sheetRef}
+          enabledHeaderGestureInteraction
+          snapPoints={[500, 75, 100]}
+          renderHeader={renderHeader}
+          renderContent={renderContent}
+        />
+      )}
+    </>
+  )
+};

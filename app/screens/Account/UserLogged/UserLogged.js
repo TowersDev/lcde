@@ -23,20 +23,20 @@ export default function UserLogged(props) {
     setRealoadUserInfo(false);
   }, [realoadUserInfo]);
 
-  onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  };
+  // onRefresh = () => {
+  //   setRefreshing(true);
+  //   setTimeout(() => {
+  //     setRefreshing(false);
+  //   }, 1000);
+  // };
 
   return (
     <View style={styles.viewUserInfo}>
       <ScrollView
         contentContainerStyle={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        // refreshControl={
+        //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        // }
       >
       {userInfo && (
         <InfoUser

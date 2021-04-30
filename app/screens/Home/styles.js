@@ -20,19 +20,18 @@ const styles = StyleSheet.create({
   },
 
   searchBox: {
-    // position: "absolute",
-    marginTop: Platform.os === 'ios' ? 40 : 7,
+    position: "absolute",
+    marginTop: Platform.os === 'ios' ? 40 : 40,
     flexDirection: "row",
     backgroundColor: "#fff",
-    width: "80%",
+    width: '90%',
     borderRadius: 5,
     marginLeft: 20,
     shadowColor: "#ccc",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.5,
     shadowRadius: 5,
-    elevation: 10,
-    zIndex: 5
+    elevation: 3,
   },
   iconHeaderRight: {
     marginTop: 12,
@@ -40,17 +39,26 @@ const styles = StyleSheet.create({
   },
   chipsScrollView: {
     position: 'absolute',
-    top:Platform.OS === 'ios' ? 90 : 70,
+    top:Platform.OS === 'ios' ? 20: 20,
     paddingHorizontal: 10,
+    backgroundColor: 'rgba(255, 255, 255, .6)',
+    // paddingTop: 8,
+    marginLeft: 20,
+    marginRight: 20,
+    zIndex: 9999,
   },
   chipsItem: {
     flexDirection: "row",
     backgroundColor: "#fff",
     borderRadius: 20,
-    padding: 8,
+    padding: 6,
     paddingHorizontal: 20,
     marginHorizontal: 10,
     height: 35,
+    borderWidth: 2,
+    borderColor: 'rgba(166, 47, 3, .4)',
+    borderStyle:'solid',
+    elevation: 5,
   },
   scrollView: {
     position: "absolute",
@@ -62,15 +70,8 @@ const styles = StyleSheet.create({
   card: {
     elevation: 2,
     backgroundColor: "#fff",
-    borderTopLeftRadius: 5,
-    borderTopRightRadius: 5,
-    marginHorizontal: 10,
-    shadowColor: "#000",
-    // shadowRadius: 5,
-    // shadowOpacity: 1,
-    // shadowOffset: { x: 2, y: -2 },
     height: 100,
-    width: width * 0.8,
+    width: 300,
     overflow: "hidden",
   },
   cardImage: {
@@ -110,6 +111,85 @@ const styles = StyleSheet.create({
     color: "green",
     marginTop: 3,
     marginRight: 3
+  },
+  header: {
+    backgroundColor: '#fff',
+    paddingTop: 15,
+    paddingBottom: 40,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderLeftColor: 'rgba(166, 47, 3, .4)',
+    borderTopColor: 'rgba(166, 47, 3, .4)',
+    borderRightColor: 'rgba(166, 47, 3, .4)',
+    borderBottomColor: 'white',
+    borderStyle:'solid',
+
+  },
+  viewRestaurant: {
+    flexDirection: "row",
+    margin: 10,
+  },
+  viewRestaurantImage: {
+    marginRight: 15,
+  },
+  imageRestaurant: {
+    width: 80,
+    height: 80,
+  },
+  restaurantName: {
+    fontWeight: "bold",
+    marginLeft: 3
+  },
+  restaurantAddress: {
+    color: "green",
+    fontSize: 10,
+  },
+  iconMarker: {
+    color: "green",
+    marginTop: 1,
+    marginRight: 3
+  },
+  iconBeer: {
+    color: "#A62F03",
+  },
+  restaurantDescription: {
+    paddingTop: 2,
+    fontSize: 10,
+    color: "grey",
+    marginLeft: 3,
+    width: 300,
+  },
+  notFoundRestaurants: {
+    marginTop: 10,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  rating: {
+    left: 0,
+    marginTop: 5,
+    marginRight: 3,
+  },
+  formContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 30,
+  },
+  inputForm: {
+    width: "100%",
+    marginTop: 20,
+  },
+  btnContainerRegister: {
+    // marginTop: 20,
+    width: "95%",
+  },
+  btnRegister: {
+    backgroundColor: "#A62F03",
+  },
+  iconRight: {
+    color: "#c1c1c1",
   },
 });
 
