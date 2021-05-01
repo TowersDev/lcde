@@ -13,7 +13,7 @@ const db = firebase.firestore(firebaseApp);
 
 export default function AddReviewRestaurant(props) {
   const { navigation, route } = props;
-  const { idRestaurant } = route.params;
+  const { idBar } = route.params;
   const [rating, setRating] = useState(null);
   const [title, setTitle] = useState("");
   const [review, setReview] = useState("");
@@ -30,12 +30,11 @@ export default function AddReviewRestaurant(props) {
     } else {
       setIsLoading(true);
       const user = firebase.auth().currentUser;
-      console.log(user);
       const paylod = {
         idUser: user.uid,
         displayName: user.displayName,
         avatarUser: user.photoURL,
-        idRestaurant: idRestaurant,
+        idBar: idBar,
         title: title,
         review: review,
         rating: rating,
@@ -55,7 +54,7 @@ export default function AddReviewRestaurant(props) {
   };
 
   const updateRestaurant = () => {
-    const restaurantRef = db.collection("bars").doc(idRestaurant);
+    const restaurantRef = db.collection("bars").doc(idBar);
 
     restaurantRef.get().then((response) => {
       const restaurantData = response.data();

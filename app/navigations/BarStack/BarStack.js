@@ -16,31 +16,10 @@ export default function BarStack({ navigation }) {
         name="bar"
         component={Bars}
         options={{
-          title: "Bares de España",
+          title: "Cervezas registradas",
           headerStyle: {
-            backgroundColor: "transparent",
+            backgroundColor: "#f2B705",
           },
-          headerTitleStyle: {
-            fontFamily: "sweet",
-            fontSize: 30,
-            alignSelf: "center",
-            justifyContent: "center",
-          },
-          headerLeft: () => (
-            <Icon
-              type="material-community"
-              name="menu"
-              iconStyle={styles.iconHeaderLeft}
-            />
-          ),
-          headerRight: () => (
-            <Icon
-              type="material-community"
-              name="magnify"
-              iconStyle={styles.iconHeaderRight}
-              onPress={() => navigation.navigate("search")}
-            />
-          ),
         }}
       />
       <Stack.Screen

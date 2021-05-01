@@ -31,7 +31,7 @@ export default function Navigation() {
         <Tab.Screen name="home" component={HomeStack} />
         <Tab.Screen name="bar" component={BarStack} />
         <Tab.Screen name="favorites" component={FavoritesStack} />
-        <Tab.Screen name="top-cervezas" component={TopRestaurantsStack} />
+        {/* <Tab.Screen name="top-cervezas" component={TopRestaurantsStack} /> */}
         <Tab.Screen name="search" component={SearchStack} />
         <Tab.Screen name="account" component={AccountStack} />
       </Tab.Navigator>

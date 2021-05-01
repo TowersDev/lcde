@@ -8,10 +8,10 @@ export default function FavoritesStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="favourites"
+        name="favourites"a
         component={Favorites}
         options={{
-          title: "Favorites",
+          title: "Bares favoritos",
           headerStyle: {
             backgroundColor: "#f2B705",
           },

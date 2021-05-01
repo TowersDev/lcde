@@ -115,9 +115,6 @@ export default function InfoUser(props) {
           </Text>
           <Text>{email ? email : "Socia Login"}</Text>
         </View>
-        <View style={styles.cervezaFav}>
-            <Text>cerveza fav</Text>
-        </View>
       </View>
     </>
   );

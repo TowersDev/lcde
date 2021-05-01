@@ -11,7 +11,7 @@ import styles from "./styles";
 const db = firebase.firestore(firebaseApp);
 
 export default function ListReviews(props) {
-  const { navigation, idRestaurant } = props;
+  const { navigation, idBar } = props;
   const [userLogged, setUserLogged] = useState(false);
   const [reviews, setReviews] = useState([]);
 
@@ -20,9 +20,8 @@ export default function ListReviews(props) {
   });
 
   useEffect(() => {
-    console.log('entra')
     db.collection("reviews")
-      .where("idRestaurant", "==", idRestaurant)
+      .where("idBar", "==", idBar)
       .get()
       .then((response) => {
         const resultReview = [];
@@ -49,7 +48,7 @@ export default function ListReviews(props) {
           }}
           onPress={() =>
             navigation.navigate("add-review-restaurant", {
-              idRestaurant: idRestaurant,
+              idBar: idBar,
             })
           }
         />

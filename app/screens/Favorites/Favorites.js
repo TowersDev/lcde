@@ -1,12 +1,5 @@
 import React, { useState, useRef, useCallback } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Alert, Dimensions } from "react-native";
 import { Image, Icon, Button } from "react-native-elements";
 import { useFocusEffect } from "@react-navigation/native";
 import Toast from "react-native-easy-toast";
@@ -21,7 +14,7 @@ const db = firebase.firestore(firebaseApp);
 
 export default function Favorites(props) {
   const { navigation } = props;
-  const [restaurants, setRestaurants] = useState(null);
+  const [bars, setBars] = useState(null);
   const [userLogged, setUserLogged] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [reloadData, setReloadData] = useState(false);
@@ -39,50 +32,34 @@ export default function Favorites(props) {
           .where("idUser", "==", idUser)
           .get()
           .then((response) => {
-            const idRestaurantsArray = [];
+            const idBarsArray = [];
             response.forEach((doc) => {
-              idRestaurantsArray.push(doc.data().idRestaurant);
+              console.log(doc.data())
+              idBarsArray.push(doc.data());
             });
-            getDataRestaurant(idRestaurantsArray).then((response) => {
-              const restuarants = [];
-              response.forEach((doc) => {
-                const restaurant = doc.data();
-                restaurant.id = doc.id;
-                restuarants.push(restaurant);
-              });
-              setRestaurants(restuarants);
-            });
+            setBars(idBarsArray);
           });
       }
       setReloadData(false);
     }, [userLogged, reloadData])
   );
 
-  const getDataRestaurant = (idRestaurantsArray) => {
-    const arrayRestaurants = [];
-    idRestaurantsArray.forEach((idRestaurant) => {
-      const result = db.collection("bars").doc(idRestaurant).get();
-      arrayRestaurants.push(result);
-    });
-    return Promise.all(arrayRestaurants);
-  };
-
   if (!userLogged) {
     return <UserNoLogged navigation={navigation} />;
   }
 
-  if (restaurants?.length === 0) {
+  if (bars?.length === 0) {
     return <NotFoundRestaurants />;
   }
 
   return (
     <View style={styles.viewBody}>
-      {restaurants ? (
+      {bars ? (
         <FlatList
-          data={restaurants}
-          renderItem={(restaurant) => (
-            <Restaurant
-              restaurant={restaurant}
+          data={bars}
+          renderItem={(bar) => (
+            <Bar
+              bar={bar}
               setIsLoading={setIsLoading}
               toastRef={toastRef}
               setReloadData={setReloadData}
@@ -133,15 +110,17 @@ function UserNoLogged(props) {
   );
 }
 
-function Restaurant(props) {
+function Bar(props) {
+  const screenWidth = Dimensions.get("window").width;
   const {
-    restaurant,
+    bar,
     setIsLoading,
     toastRef,
     setReloadData,
     navigation,
   } = props;
-  const { id, name, images } = restaurant.item;
+  const { idBar, idUser, address, location, nombre, photos,  } = bar.item;
+  console.log(bar)
 
   const confirmRemoveFavorite = () => {
     Alert.alert(
@@ -164,7 +143,7 @@ function Restaurant(props) {
   const removeFavorite = () => {
     setIsLoading(true);
     db.collection("favorites")
-      .where("idRestaurant", "==", id)
+      .where("idBar", "==", idBar)
       .where("idUser", "==", firebase.auth().currentUser.uid)
       .get()
       .then((response) => {
@@ -189,25 +168,29 @@ function Restaurant(props) {
   return (
     <View style={styles.restaurant}>
       <TouchableOpacity
-        onPress={() =>
-          navigation.navigate("bar", {
-            screen: "restaurant",
-            params: { id },
-          })
-        }
-      >
+        // onPress={() =>
+        //   navigation.navigate("bar", {
+        //     screen: "restaurant",
+        //     params: { id },
+        //   })
+        // }
+      >{photos ? photos.map((pic, index) => (
+          <Image
+            key={idBar}
+            style={{ width: screenWidth - 20, height: 250 }}
+            resizeMode="cover"
+            source={{ uri: pic.photo_reference ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${pic.photo_reference}&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo` : '../../../assets/img/no-image.png' }}
+          />
+        )) : (
         <Image
-          resizeMode="cover"
-          style={styles.image}
-          PlaceholderContent={<ActivityIndicator color="#fff" />}
-          source={
-            images[0]
-              ? { uri: images[0] }
-              : require("../../../assets/img/no-image.png")
-          }
-        />
+            key={idBar}
+            style={{ width: screenWidth - 20, height: 250 }}
+            resizeMode="cover"
+            source={require("../../../assets/img/no-image.png")}
+          />
+        )}
         <View style={styles.info}>
-          <Text style={styles.name}>{name}</Text>
+          <Text style={styles.name}>{nombre}</Text>
           <Icon
             type="material-community"
             name="heart"
