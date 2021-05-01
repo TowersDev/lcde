@@ -5,11 +5,17 @@ import Carousel, { Pagination } from "react-native-snap-carousel";
 
 export default function CarouselImages(props) {
   const { arrayImages, height, width } = props;
-
   const [activeSlide, setActiveSlide] = useState(0);
 
-  const renderItem = ({ item }) => {
-    return <Image style={{ width, height }} source={{ uri: item }} />;
+  const renderItem = ({ item, index }) => {
+    return (
+      <Image
+        key={index}
+        style={{ width, height }}
+        resizeMode="cover"
+        source={{ uri: item.photo_reference ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${item.photo_reference}&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo` : '../../../assets/img/no-image.png' }}
+      />
+    );
   };
 
   return (
@@ -30,7 +36,7 @@ export default function CarouselImages(props) {
           onSnapToItem={(index) => setActiveSlide(index)}
         />
         <Pagination
-          dotsLength={arrayImages.length}
+          dotsLength={arrayImages?.length}
           activeDotIndex={activeSlide}
           containerStyle={styles.paginationContainer}
           dotColor="rgba(255, 255, 255, 0.92)"

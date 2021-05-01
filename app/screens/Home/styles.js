@@ -38,11 +38,11 @@ const styles = StyleSheet.create({
     marginRight: 10
   },
   chipsScrollView: {
+    flex: 1,
     position: 'absolute',
     top:Platform.OS === 'ios' ? 20: 20,
     paddingHorizontal: 10,
     backgroundColor: 'rgba(255, 255, 255, .6)',
-    // paddingTop: 8,
     marginLeft: 20,
     marginRight: 20,
     zIndex: 9999,
@@ -108,14 +108,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   iconMarker: {
-    color: "green",
-    marginTop: 3,
+    color: "#A62F03",
+    
     marginRight: 3
   },
   header: {
     backgroundColor: '#fff',
     paddingTop: 15,
-    paddingBottom: 40,
+    paddingBottom: 70,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     alignItems: 'center',
@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
   },
   viewRestaurantImage: {
     marginRight: 15,
+    marginTop: 5,
   },
   imageRestaurant: {
     width: 80,
@@ -143,13 +144,9 @@ const styles = StyleSheet.create({
     marginLeft: 3
   },
   restaurantAddress: {
-    color: "green",
+    color: "#A62F03",
     fontSize: 10,
-  },
-  iconMarker: {
-    color: "green",
-    marginTop: 1,
-    marginRight: 3
+    maxWidth: '90%'
   },
   iconBeer: {
     color: "#A62F03",
@@ -187,6 +184,16 @@ const styles = StyleSheet.create({
   },
   btnRegister: {
     backgroundColor: "#A62F03",
+    flexDirection: "row",
+    borderRadius: 20,
+    padding: 6,
+    paddingHorizontal: 20,
+    marginHorizontal: 10,
+    height: 35,
+    borderWidth: 2,
+    borderColor: 'rgba(166, 47, 3, .4)',
+    borderStyle:'solid',
+    elevation: 5,
   },
   iconRight: {
     color: "#c1c1c1",

@@ -217,7 +217,6 @@ function Map(props) {
     fetch(restaurantSearchUrl)
       .then((response) => response.json())
       .then((responseJson) => {
-        console.log(JSON.stringify(responseJson))
         // const address = JSON.stringify(responseJson.results[0].formatted_address).replace(/"/g,' ');
         // setDirection(address);
       }

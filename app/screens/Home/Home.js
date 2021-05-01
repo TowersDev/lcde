@@ -1,31 +1,38 @@
 import React, { useState, useEffect, useRef, useCallback, Component } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import MapView, { Callout, PROVIDER_GOOGLE} from 'react-native-maps';
-import { View, Text, Image, Dimensions, Animated, TouchableOpacity, TextInput, FlatList, ScrollView } from "react-native";
+import { View, Text, Dimensions, Animated, TouchableOpacity, TextInput, FlatList } from "react-native";
+import { ScrollView } from 'react-native-gesture-handler';
 import * as Location from 'expo-location';
 import firebase from "firebase/app";
-import { Icon, Rating, Button, Card, Divider } from 'react-native-elements';
+import { Icon, Rating, Image, Button, Card, Divider } from 'react-native-elements';
 import { firebaseApp } from "../../utils/firebase";
 import { mapRetroStyle } from '../../utils/const';
+import BottomSheet from 'reanimated-bottom-sheet';
 import styles from "./styles";
 import * as Permissions from 'expo-permissions';
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import BottomSheet from 'reanimated-bottom-sheet';
+import { useNavigation } from "@react-navigation/native";
 
 export default function Home (props) {
 
   const [region, setRegion] = useState(null);
   const [bars, setBars] = useState(null);
+  const navigation = useNavigation();
   const [barIsClicked, setBarIsClicked] = useState(false);
   const sheetRef = useRef(null);
   const [locationChange, setLocationChange] = useState(null);
-  const [showButtonBuscar, setShowButtonBuscar] = useState(true);
   const [searchRegion, setSearchRegion] = useState(null);
   const _map = useRef(null);
 
+  const setMapPadding = () => {
+    const iosEdgePadding = { top: mapPaddingTop * 0.5, right: 0, bottom: mapPaddingBottom * 0.95, left: 0 };
+    const androidEdgePadding = { top: PixelRatio.getPixelSizeForLayoutSize(screen.height * 0), right: 0, bottom: PixelRatio.getPixelSizeForLayoutSize(screen.height * 0.17), left: 0 };
+    const edgePadding = (Platform.OS === 'android') ? androidEdgePadding : iosEdgePadding;
+    return edgePadding;
+  };
+
   useEffect(() => {
     (async () => {
-      console.log('entra')
       const resultPermissions = await Permissions.askAsync(
         Permissions.LOCATION
       );
@@ -46,7 +53,7 @@ export default function Home (props) {
         });
         const url  = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
         const locationa = `location=${loc.coords.latitude},${loc.coords.longitude}`;
-        const radius = '&radius=10000';
+        const radius = '&radius=2000';
         const type = '&keyword=bar';
         const key = '&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo';
         const restaurantSearchUrl = url + locationa + radius + type + key;
@@ -61,42 +68,106 @@ export default function Home (props) {
     })();
   }, [setBarIsClicked]);
 
+  const onRegionChange = (e) => {
+    setLocationChange(e);
+  }
+
+  const prueba = [
+    {
+      name: 'Buscar',
+      icon: <Icon type="material-community" name="magnify" />,
+      function: () => buscar(),
+    },
+  ];
+
   const renderHeader = () => (
-    <>
-      <View
-        style={styles.header}
+    <View
+      style={styles.header}
+    >
+      <ScrollView
+        horizontal
+        scrollEventThrottle={1}
+        height={60}
+        style={styles.chipsScrollView}
+        contentInset={{ // ios only
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 20,
+        }}
+        contentContainerStyle={{
+          paddingRight: Platform.OS === 'android' ? 20 : 20
+        }}
       >
-          <ScrollView
-          horizontal
-          scrollEventThrottle={1}
-          height={60}
-          style={styles.chipsScrollView}
-          contentInset={{ // ios only
-            top: 0,
-            left: 0,
-            bottom: 0,
-            right: 20,
-          }}
-          contentContainerStyle={{
-            paddingRight: Platform.OS === 'android' ? 20 : 20
-          }}
-        >
-                  <Button
-          title="Buscar"
-          containerStyle={{ alignItems: 'center' }}
-          buttonStyle={styles.btnRegister}
-          onPress={buscar}
-        />
-          {prueba.map((category, index) => (
-            <TouchableOpacity key={index} style={styles.chipsItem}>
-              {category.icon}
-              <Text style={{ fontSize: 12, fontWeight: 'bold' }}>{category.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-    </>
+        {prueba.map((category, index) => (
+          <TouchableOpacity key={index} style={styles.chipsItem} onPress={category.function}>
+            {category.icon}
+            <Text style={{ fontSize: 12, fontWeight: 'bold' }}>{category.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   );
+
+  function Bares(props) {
+    const { bar, navigation } = props;
+    const { place_id, name, geometry, vicinity, photos, rating } = bar.item;
+
+    const goBar = () => {
+      navigation.navigate("barHome", {
+        place_id,
+        name,
+        geometry,
+        vicinity,
+        photos,
+        rating
+      });
+    };
+
+    return (
+      <TouchableOpacity onPress={goBar}>
+        <View style={styles.viewRestaurant}>
+          <View style={styles.viewRestaurantImage}>
+            {!photos && (
+              <Image
+                key={place_id}
+                style={{ minWidth: 80, minHeight: 80, width: 80, height: 80 }}
+                resizeMode="cover"
+                source={require("../../../assets/img/no-image.png")}
+              />
+            )}
+            {photos?.map((pic, index) => (
+              <Image
+                key={index}
+                style={{ minWidth: 80, minHeight: 80, width: 80, height: 80 }}
+                resizeMode="cover"
+                source={pic.photo_reference 
+                  ? { uri: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${pic.photo_reference}&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo`}
+                  : require("../../../assets/img/no-image.png")
+                }
+              />
+            ))}
+          </View>
+          <View style={{ marginTop: 3}}>
+            <Text style={styles.restaurantName}>{bar.item.name}</Text>
+            <View style={{flexDirection: "row"}}>
+              <Icon type="material-community" size={13} name="map-marker" iconStyle={styles.iconMarker} underlayColor="transparent" />
+              <Text style={styles.restaurantAddress}>{bar.item.vicinity}</Text>
+            </View>
+            <View style={{flexDirection: "row"}}>
+              <Rating ratingColor={"#ff0000"} style={styles.rating} imageSize={10} startingValue={bar.item.rating} readonly />
+              <Text style={{ fontSize: 10, marginTop: 3, fontWeight: "bold" }}>{bar.item.user_ratings_total}</Text>
+            </View>
+            {bar.item?.opening_hours?.open_now 
+                ? <Text style={{ fontSize: 10, fontWeight: 'bold', marginTop: 2, color: 'green' }}>Abierto</Text> 
+                : <Text style={{ fontSize: 10, fontWeight: 'bold', marginTop: 2, color: 'red' }}>Cerrado</Text>
+              }
+          </View>
+        </View>
+        <Divider style={{ backgroundColor: 'grey' }} />
+      </TouchableOpacity>
+    );
+  }
 
   const renderContent = () => (
       <View
@@ -109,44 +180,41 @@ export default function Home (props) {
           borderRightColor: 'rgba(166, 47, 3, .4)',
           borderBottomColor: 'white',
           borderStyle:'solid',
-          height: '100%',
+          zIndex: 999,
+          minHeight: '100%',
+          // height: '100%',
         }}
       >
-        {bars.map((bar, index)=>(
-          <>
-          <View style={styles.viewRestaurant}>
-            <View style={styles.viewRestaurantImage}>
-              <Image
-                resizeMode="cover"
-                source={require("../../../assets/img/no-image.png")}
-                style={styles.imageRestaurant}
-              />
-            </View>
-            <View style={{ marginTop: 3}}>
-              <Text style={styles.restaurantName}>{bar.name}</Text>
-              <View style={{flexDirection: "row"}}>
-                <Icon type="material-community" size={13} name="map-marker" iconStyle={styles.iconMarker} underlayColor="transparent" />
-                <Text style={styles.restaurantAddress}>asdasd</Text>
-              </View>
-              <Text style={styles.restaurantDescription}>asdasd</Text>
-              <View style={{flexDirection: "row"}}>
-                <Rating ratingColor={"#ff0000"} style={styles.rating} imageSize={10} startingValue={0} readonly />
-                <Text style={{ fontSize: 10, marginTop: 3, fontWeight: "bold" }}>{10}</Text>
-              </View>
-            </View>
+        {bars.length > 0 ? (
+          <FlatList
+          data={bars}
+          renderItem={(bar) => (
+            <Bares bar={bar} navigation={navigation} />
+          )}
+          keyExtractor={(item, index) => index.toString()}
+          onEndReachedThreshold={0.5}
+          // onEndReached={handleLoadMore}
+          // ListFooterComponent={<FooterList isLoading={isLoading} />}
+          // refreshControl={
+          //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          // }
+        />
+        )
+        :(
+          <View style={{ alignItems: 'center', alignContent: 'center', flexDirection: "row", marginLeft: 30,}}>
+            <Icon type="material-community" color={'red'} name="alert-outline" size={50} />
+            <Text style={{ marginLeft: 10, fontSize: 15, fontWeight: 'bold', maxWidth: '80%' }}>No se han encontrado bares en esta zona</Text>
           </View>
-          <Divider style={{ backgroundColor: 'grey' }} />
-          </>
-        ))}
+        )}
       </View>
   );
 
   const buscar = () => {
-    setShowButtonBuscar(false);
-    console.log(locationChange);
+    setBars(null);
+    // console.log(locationChange);
     const url  = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
     const locationa = `location=${locationChange.latitude},${locationChange.longitude}`;
-    const radius = '&radius=10000';
+    const radius = '&radius=2000';
     const type = '&keyword=bar';
     const key = '&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo';
     const restaurantSearchUrl = url + locationa + radius + type + key;
@@ -158,28 +226,6 @@ export default function Home (props) {
       }
     );
   }
-
-  const onRegionChange = (e) => {
-    setLocationChange(e);
-  }
-
-  const prueba = [{
-    name: 'fghfgh',
-    icon: <Icon type="material-community" name="magnify" />
-  },
-  {
-    name: 'asdasd',
-    icon: <Icon type="material-community" name="magnify" />
-  },
-  {
-    name: 'ghjghj',
-    icon: <Icon type="material-community" name="magnify" />
-  },
-  {
-    name: 'jkljklj',
-    icon: <Icon type="material-community" name="magnify" />
-  },
-  ];
 
   return(
     <>
@@ -207,105 +253,12 @@ export default function Home (props) {
           </MapView.Marker>
         ))}
       </MapView>
-    <GooglePlacesAutocomplete
-      placeholder='Buscar zona'
-      minLength={2} // minimum length of text to search
-      autoFocus={true}
-      returnKeyType={'search'} // Can be left out for default return key https://facebook.github.io/react-native/docs/textinput.html#returnkeytype
-      listViewDisplayed={true}   // true/false/undefined
-      fetchDetails={true}
-      renderDescription={row => row.description || row.vicinity} // custom description render
-      onPress={(data, details = null) => { // 'details' is provided when fetchDetails = true
-        setSearchRegion({
-          latitude: details?.geometry?.location?.lat || '',
-          longitude: details?.geometry?.location?.lng || '',
-          latitudeDelta: 0.001,
-          longitudeDelta: 0.001,
-        })
-        _map.current.animateToRegion(
-          {
-            latitude: details?.geometry?.location?.lat || '',
-            longitude: details?.geometry?.location?.lng || '',
-            latitudeDelta: 0.001,
-            longitudeDelta: 0.001,
-          },
-          0
-        );
-      }}
-      query={{
-        // available options: https://developers.google.com/places/web-service/autocomplete
-        key: 'AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo',
-        language: 'es', // language of the results
-        types: 'geocode', // default: 'geocode'
-      }}
-      styles={{
-        description: {
-          fontSize: 12,
-          fontWeight: 'bold',
-        },
-        container: {
-          marginTop: 100,
-          zIndex: 9999,
-          position: 'absolute',
-          width: '90%',
-          borderRadius: 5,
-          marginLeft: 20,
-          shadowColor: "#ccc",
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.5,
-          shadowRadius: 5,
-      },
-      textInputContainer: {
-          backgroundColor: 'rgba(0,0,0,0)',
-          borderTopWidth: 0,
-          borderBottomWidth: 0,
-          height: 200,
-      },
-      textInput: {
-          marginLeft: 5,
-          marginRight: 5,
-          color: '#A62F03',
-          fontWeight: 'bold',
-          fontSize: 12,
-          height: 40,
-          borderRadius: 30,
-          borderWidth: 2,
-          borderColor: 'rgba(166, 47, 3, .4)',
-          borderStyle:'solid',
-      },
-      listView: {
-          flex: 1,
-          position: 'absolute',
-          top: 50,
-          backgroundColor: 'white',
-          width: '50%',
-          alignContent: 'center',
-          alignSelf: 'center',
-          width: '100%',
-          color: 'black',
-      },
-      row: {
-          height: 40
-      },
-      poweredContainer: {
-          display: 'none'
-      },
-      powered: {
-          display: 'none'
-      }
-      }}
-      nearbyPlacesAPI={'GoogleReverseGeocoding'} // Which API to use: GoogleReverseGeocoding or GooglePlacesSearch
-      GoogleReverseGeocodingQuery={{
-        // available options for GoogleReverseGeocoding API : https://developers.google.com/maps/documentation/geocoding/intro
-        key: 'AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo',
-        language: 'es',
-      }}
-    />
       {bars && (
         <BottomSheet
           ref={sheetRef}
+          enabledContentGestureInteraction={false}
           enabledHeaderGestureInteraction
-          snapPoints={[500, 75, 100]}
+          snapPoints={[500, 80, 80]}
           renderHeader={renderHeader}
           renderContent={renderContent}
         />

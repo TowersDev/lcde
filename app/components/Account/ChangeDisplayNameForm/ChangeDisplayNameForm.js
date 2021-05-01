@@ -34,7 +34,6 @@ export default function ChangeDisplayNameForm(props) {
           setError("Error al actualizar el nombre.");
           setIsLoading(false);
         });
-      console.log(newDisplayName)
     }
   };
 

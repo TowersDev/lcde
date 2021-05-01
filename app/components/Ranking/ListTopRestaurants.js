@@ -5,7 +5,6 @@ import styles from "./styles";
 
 export default function ListTopRestaurants(props) {
   const { restaurants, navigation } = props;
-  console.log(restaurants);
   return (
     <FlatList
       data={restaurants}
