@@ -33,6 +33,7 @@ export default function Map(props) {
           latitude: location.lat,
           longitude: location.lng,
         }}
+        image={require('../../assets/img/market.png')}
       />
     </MapView>
   );

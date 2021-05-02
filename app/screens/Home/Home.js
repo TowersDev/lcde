@@ -12,6 +12,7 @@ import BottomSheet from 'reanimated-bottom-sheet';
 import styles from "./styles";
 import * as Permissions from 'expo-permissions';
 import { useNavigation } from "@react-navigation/native";
+import Loading from "../../components/Loading/Loading";
 
 export default function Home (props) {
 
@@ -23,6 +24,7 @@ export default function Home (props) {
   const [locationChange, setLocationChange] = useState(null);
   const [searchRegion, setSearchRegion] = useState(null);
   const _map = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const setMapPadding = () => {
     const iosEdgePadding = { top: mapPaddingTop * 0.5, right: 0, bottom: mapPaddingBottom * 0.95, left: 0 };
@@ -53,14 +55,15 @@ export default function Home (props) {
         });
         const url  = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
         const locationa = `location=${loc.coords.latitude},${loc.coords.longitude}`;
-        const radius = '&radius=2000';
-        const type = '&keyword=bar';
+        const radius = '&radius=1500';
+        const type = '&type=bar&keyword=bar';
         const key = '&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo';
         const restaurantSearchUrl = url + locationa + radius + type + key;
         fetch(restaurantSearchUrl)
           .then((response) => response.json())
           .then((responseJson) => {
             const address = responseJson.results;
+            console.log(responseJson.results);
             setBars(address);
           }
         );
@@ -210,17 +213,19 @@ export default function Home (props) {
   );
 
   const buscar = () => {
-    setBars(null);
+    // setBars(null);
     // console.log(locationChange);
+    setIsLoading(true);
     const url  = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
     const locationa = `location=${locationChange.latitude},${locationChange.longitude}`;
-    const radius = '&radius=2000';
-    const type = '&keyword=bar';
+    const radius = '&radius=1500';
+    const type = '&type=bar&keyword=bar';
     const key = '&key=AIzaSyBWfgqqPQVNzth2HY5cVApgGuIpFGEwFVo';
     const restaurantSearchUrl = url + locationa + radius + type + key;
     fetch(restaurantSearchUrl)
       .then((response) => response.json())
       .then((responseJson) => {
+        setIsLoading(false);
         const address = responseJson.results;
         setBars(address);
       }
@@ -253,6 +258,7 @@ export default function Home (props) {
           </MapView.Marker>
         ))}
       </MapView>
+      <Loading isVisible={isLoading} text="Buscando bares..." />
       {bars && (
         <BottomSheet
           ref={sheetRef}
